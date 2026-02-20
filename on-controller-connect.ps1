@@ -31,9 +31,6 @@ public class XInput {
     public static extern uint XInputGetState(uint dwUserIndex, ref XINPUT_STATE pState);
 
     [DllImport("user32.dll")]
-    public static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
     public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 }
 "@
@@ -82,7 +79,6 @@ while ($true) {
                         Select-Object -First 1
                     if ($steamProc) {
                         [XInput]::ShowWindow($steamProc.MainWindowHandle, 9)  # SW_RESTORE
-                        [XInput]::SetForegroundWindow($steamProc.MainWindowHandle)
                     }
                     Write-Output "Steam brought to foreground in Big Picture mode."
                 }

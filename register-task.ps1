@@ -5,7 +5,6 @@
 
 # --- Turn on TV on wake ---
 
-$LauncherPath = Join-Path $PSScriptRoot "launch-hidden.vbs"
 $WakeScriptPath = Join-Path $PSScriptRoot "on-wake.ps1"
 $WakeTaskName = "TurnOnTvOnWake"
 
@@ -35,8 +34,8 @@ $wakeXml = @"
   </Settings>
   <Actions>
     <Exec>
-      <Command>wscript.exe</Command>
-      <Arguments>"$LauncherPath" "$WakeScriptPath"</Arguments>
+      <Command>conhost.exe</Command>
+      <Arguments>--headless powershell.exe -ExecutionPolicy Bypass -File "$WakeScriptPath"</Arguments>
     </Exec>
   </Actions>
 </Task>
@@ -75,8 +74,8 @@ $sleepXml = @"
   </Settings>
   <Actions>
     <Exec>
-      <Command>wscript.exe</Command>
-      <Arguments>"$LauncherPath" "$SleepScriptPath"</Arguments>
+      <Command>conhost.exe</Command>
+      <Arguments>--headless powershell.exe -ExecutionPolicy Bypass -File "$SleepScriptPath"</Arguments>
     </Exec>
   </Actions>
 </Task>
@@ -115,8 +114,8 @@ $controllerXml = @"
   </Settings>
   <Actions>
     <Exec>
-      <Command>wscript.exe</Command>
-      <Arguments>"$LauncherPath" "$ControllerScriptPath"</Arguments>
+      <Command>conhost.exe</Command>
+      <Arguments>--headless powershell.exe -ExecutionPolicy Bypass -File "$ControllerScriptPath"</Arguments>
     </Exec>
   </Actions>
 </Task>
