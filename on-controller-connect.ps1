@@ -1,9 +1,14 @@
 # Background process that listens for Xbox controller connections via the
-# Xbox Wireless Adapter.  When a controller connects, turns on the TV
-# (switching to HDMI 1) and launches Steam Big Picture.
+# Xbox Wireless Adapter. When a controller connects, launches Steam if not running.
 
 . "$PSScriptRoot\config.ps1"
-$TvApiUrl = "$TvApiOrigin/tv/on"
+$LogFile = Join-Path $PSScriptRoot "on-controller-connect.log"
+function Write-Log($msg) {
+    if (-not $LogToFile) { return }
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+    "$ts  $msg" | Out-File -Append -FilePath $LogFile
+}
+Write-Log "=== on-controller-connect.ps1 started ==="
 
 Add-Type -TypeDefinition @"
 using System;
@@ -29,9 +34,6 @@ public class XInput {
 
     [DllImport("xinput1_4.dll")]
     public static extern uint XInputGetState(uint dwUserIndex, ref XINPUT_STATE pState);
-
-    [DllImport("user32.dll")]
-    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 }
 "@
 
@@ -48,6 +50,7 @@ function Test-XboxControllerConnected {
 
 # Track initial state so we only fire on transitions
 $wasConnected = Test-XboxControllerConnected
+Write-Log "Initial controller state: connected=$wasConnected"
 
 Register-WmiEvent -Class Win32_DeviceChangeEvent -SourceIdentifier "ControllerWatch" | Out-Null
 
@@ -59,54 +62,16 @@ while ($true) {
     Start-Sleep -Milliseconds 500
 
     $isConnected = Test-XboxControllerConnected
+    Write-Log "DeviceChangeEvent: isConnected=$isConnected wasConnected=$wasConnected"
 
     if ($isConnected -and -not $wasConnected) {
-        $mutexName = "Global\DisplayScriptsMutex"
-        $mutex = New-Object System.Threading.Mutex($false, $mutexName)
-        if (-not $mutex.WaitOne(0)) {
-            Write-Output "Another display script is running. Skipping."
-            $mutex.Dispose()
+        Write-Log "Controller connected."
+        if (-not (Get-Process -Name "steam" -ErrorAction SilentlyContinue)) {
+            Start-Process "steam://open/bigpicture"
+            Write-Log "Steam launched in Big Picture mode."
         } else {
-            $startTime = Get-Date
-            try {
-                if (-not (Get-Process -Name "steam" -ErrorAction SilentlyContinue)) {
-                    Start-Process "steam://open/bigpicture"
-                    Write-Output "Steam launched in Big Picture mode."
-                } else {
-                    Start-Process "steam://open/bigpicture"
-                    $steamProc = Get-Process -Name "steam" -ErrorAction SilentlyContinue |
-                        Where-Object { $_.MainWindowHandle -ne [IntPtr]::Zero } |
-                        Select-Object -First 1
-                    if ($steamProc) {
-                        [XInput]::ShowWindow($steamProc.MainWindowHandle, 9)  # SW_RESTORE
-                    }
-                    Write-Output "Steam brought to foreground in Big Picture mode."
-                }
-
-                try {
-                    $body = @{ input = "1" } | ConvertTo-Json
-                    Invoke-RestMethod -Uri $TvApiUrl -Method Post -Body $body -ContentType "application/json" -TimeoutSec 10
-                    Write-Output "TV turned on (HDMI 1)."
-                } catch {
-                    Write-Error "Failed to reach TV API: $_"
-                }
-
-                $elapsed = (Get-Date) - $startTime
-                $remaining = 15 - $elapsed.TotalSeconds
-                if ($remaining -gt 0) {
-                    Start-Sleep -Seconds $remaining
-                }
-            } finally {
-                $mutex.ReleaseMutex()
-                $mutex.Dispose()
-            }
+            Write-Log "Steam already running."
         }
-
-        # Drain stale events that queued up during the hold and re-read state
-        while ($stale = Get-Event -SourceIdentifier "ControllerWatch" -ErrorAction SilentlyContinue) {
-            Remove-Event -EventIdentifier $stale.EventIdentifier
-        }
-        $isConnected = Test-XboxControllerConnected
     }
 
     $wasConnected = $isConnected
