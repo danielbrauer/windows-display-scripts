@@ -3,7 +3,7 @@
 
 #Requires -RunAsAdministrator
 
-$TaskNames = @("TurnOnTvOnWake", "TurnOffTvOnSleep", "OnControllerConnect")
+$TaskNames = @("TurnOnTvOnWake", "TurnOffTvOnSleep", "OnControllerConnect", "MonitorSSHAwake")
 
 foreach ($name in $TaskNames) {
     if (Get-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue) {

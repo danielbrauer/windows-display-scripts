@@ -124,3 +124,48 @@ $controllerXml = @"
 Unregister-ScheduledTask -TaskName $ControllerTaskName -Confirm:$false -ErrorAction SilentlyContinue
 Register-ScheduledTask -TaskName $ControllerTaskName -Xml $controllerXml
 Write-Output "Scheduled task '$ControllerTaskName' registered. It runs at logon and reacts to controller connections."
+
+# --- Keep machine awake while SSH sessions are active ---
+
+$SSHAwakeScriptPath = Join-Path $PSScriptRoot "Monitor-SSHAwake.ps1"
+$SSHAwakeTaskName = "MonitorSSHAwake"
+
+# Runs every 60 seconds to check for active SSH sessions and toggle PowerToys Awake
+$sshAwakeXml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <Triggers>
+    <TimeTrigger>
+      <Repetition>
+        <Interval>PT1M</Interval>
+        <StopAtDurationEnd>false</StopAtDurationEnd>
+      </Repetition>
+      <StartBoundary>2020-01-01T00:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+    </TimeTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT1M</ExecutionTimeLimit>
+    <Enabled>true</Enabled>
+  </Settings>
+  <Actions>
+    <Exec>
+      <Command>conhost.exe</Command>
+      <Arguments>--headless powershell.exe -ExecutionPolicy Bypass -File "$SSHAwakeScriptPath"</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"@
+
+Unregister-ScheduledTask -TaskName $SSHAwakeTaskName -Confirm:$false -ErrorAction SilentlyContinue
+Register-ScheduledTask -TaskName $SSHAwakeTaskName -Xml $sshAwakeXml
+Write-Output "Scheduled task '$SSHAwakeTaskName' registered. It runs every 60s to keep the machine awake during SSH sessions."
