@@ -35,7 +35,7 @@ try {
 
 try {
     Write-Log "Sending POST to $TvApiUrl ..."
-    $body = @{ input = "1" } | ConvertTo-Json
+    $body = @{ source = $TvSourceName } | ConvertTo-Json
     $response = Invoke-RestMethod -Uri $TvApiUrl -Method Post -Body $body -ContentType "application/json" -TimeoutSec 15
     Write-Log "TV API responded: $response"
 } catch {

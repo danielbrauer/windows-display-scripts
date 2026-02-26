@@ -28,7 +28,8 @@ while ($true) {
         }
         try {
             Write-Log "Sending POST to $TvApiUrl ..."
-            Invoke-RestMethod -Uri $TvApiUrl -Method Post -TimeoutSec 5
+            $body = @{ source = $TvSourceName } | ConvertTo-Json
+            Invoke-RestMethod -Uri $TvApiUrl -Method Post -Body $body -ContentType "application/json" -TimeoutSec 5
             $lastOff = Get-Date
             Write-Log "TV API responded successfully."
         } catch {
