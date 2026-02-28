@@ -19,3 +19,9 @@ elseif (-not $activeSessions -and $awakeProcess) {
     Stop-Process -Name "PowerToys.Awake" -Force
     Write-EventLog -LogName Application -Source "SSH-Awake" -EventId 2 -Message "Awake deactivated: no SSH sessions"
 }
+
+# Remove Claude desktop shortcut if it exists
+$claudeShortcut = Join-Path ([Environment]::GetFolderPath("Desktop")) "Claude.lnk"
+if (Test-Path $claudeShortcut) {
+    Remove-Item $claudeShortcut -Force
+}
