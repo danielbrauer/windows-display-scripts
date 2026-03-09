@@ -41,3 +41,12 @@ try {
 } catch {
     Write-Log "ERROR calling TV API: $_"
 }
+
+$AmpApiUrl = "$TvApiOrigin/amp/on"
+try {
+    Write-Log "Sending POST to $AmpApiUrl ..."
+    $response = Invoke-RestMethod -Uri $AmpApiUrl -Method Post -TimeoutSec 15
+    Write-Log "Amp API responded: $response"
+} catch {
+    Write-Log "ERROR calling Amp API: $_"
+}
