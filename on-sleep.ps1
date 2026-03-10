@@ -4,8 +4,6 @@
 
 . "$PSScriptRoot\config.ps1"
 $TvApiUrl = "$TvApiOrigin/tv/off"
-$lastOff = [DateTime]::MinValue
-$cooldownSeconds = 30
 
 $LogFile = Join-Path $PSScriptRoot "on-sleep.log"
 function Write-Log($msg) {
@@ -22,15 +20,10 @@ while ($true) {
     Remove-Event -EventIdentifier $ev.EventIdentifier
     Write-Log "PowerModeChanged event: $($ev.SourceEventArgs.Mode)"
     if ($ev.SourceEventArgs.Mode -eq [Microsoft.Win32.PowerModes]::Suspend) {
-        if (((Get-Date) - $lastOff).TotalSeconds -lt $cooldownSeconds) {
-            Write-Log "Cooldown active, skipping."
-            continue
-        }
         try {
             Write-Log "Sending POST to $TvApiUrl ..."
             $body = @{ source = $TvSourceName } | ConvertTo-Json
             Invoke-RestMethod -Uri $TvApiUrl -Method Post -Body $body -ContentType "application/json" -TimeoutSec 5
-            $lastOff = Get-Date
             Write-Log "TV API responded successfully."
         } catch {
             Write-Log "ERROR calling TV API: $_"
