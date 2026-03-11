@@ -1,3 +1,4 @@
 config.ps1
 *.log
 *.html
+.amp-on

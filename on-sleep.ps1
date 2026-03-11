@@ -28,5 +28,19 @@ while ($true) {
         } catch {
             Write-Log "ERROR calling TV API: $_"
         }
+        $AmpStateFile = Join-Path $PSScriptRoot ".amp-on"
+        if (Test-Path $AmpStateFile) {
+            Remove-Item $AmpStateFile -Force
+            $AmpApiUrl = "$TvApiOrigin/amp/off"
+            try {
+                Write-Log "Sending POST to $AmpApiUrl ..."
+                Invoke-RestMethod -Uri $AmpApiUrl -Method Post -TimeoutSec 5
+                Write-Log "Amp API responded successfully."
+            } catch {
+                Write-Log "ERROR calling Amp API: $_"
+            }
+        } else {
+            Write-Log "Amp was not turned on by wake script. Skipping amp off."
+        }
     }
 }

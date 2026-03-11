@@ -43,10 +43,12 @@ try {
 }
 
 $AmpApiUrl = "$TvApiOrigin/amp/on"
+$AmpStateFile = Join-Path $PSScriptRoot ".amp-on"
 try {
     Write-Log "Sending POST to $AmpApiUrl ..."
     $response = Invoke-RestMethod -Uri $AmpApiUrl -Method Post -TimeoutSec 15
     Write-Log "Amp API responded: $response"
+    New-Item -Path $AmpStateFile -ItemType File -Force | Out-Null
 } catch {
     Write-Log "ERROR calling Amp API: $_"
 }
