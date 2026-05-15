@@ -1,6 +1,6 @@
 # Background process that keeps the machine awake while SSH sessions are active.
 # Uses WMI events to react to sshd process creation/deletion instead of polling.
-# Runs as a logon-triggered scheduled task (like on-sleep.ps1).
+# Runs as a logon-triggered scheduled task.
 
 . "$PSScriptRoot\config.ps1"
 $LogFile = Join-Path $PSScriptRoot "monitor-ssh-awake.log"
